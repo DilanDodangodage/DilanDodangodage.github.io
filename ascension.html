@@ -263,7 +263,7 @@
 
   .section-block {
     margin-bottom: 3.5rem;
-    animation: fadeUp 0.5s ease both;
+    animation: fadeUp 0.5s ease forwards;
   }
 
   .section-block h2 {
@@ -532,7 +532,7 @@
   .footer-nav a:hover { color: var(--accent); }
 
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0.7; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
@@ -661,7 +661,7 @@
 
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
-        <pre>ftp anonymous@ascension.hsm
+        <pre>ftp <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c9a8a7a6a7b0a4a6bcba89a8baaaaca7baa0a6a7e7a1baa4">[email&#160;protected]</a>
 <span class="c-output">230 Login successful.</span>
 
 ftp&gt; get pwlist.txt
@@ -678,8 +678,8 @@ ftp&gt; get pwlist.txt
 
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
-        <pre>ssh root@ascension.hsm
-<span class="c-danger">root@ascension.hsm: Permission denied (publickey).</span></pre>
+        <pre>ssh <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dcaeb3b3a89cbdafbfb9b2afb5b3b2f2b4afb1">[email&#160;protected]</a>
+<span class="c-danger"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d5a7babaa195b4a6b6b0bba6bcbabbfbbda6b8">[email&#160;protected]</a>: Permission denied (publickey).</span></pre>
       </div>
 
       <h3 id="http">HTTP (Port 80)</h3>
@@ -738,7 +738,7 @@ john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
 
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
-        <pre>ssh user1@ascension.hsm -i id_rsa
+        <pre>ssh <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="770204120546371604141219041e1819591f041a">[email&#160;protected]</a> -i id_rsa
 <span class="c-output">Enter passphrase: sammie1</span>
 <span class="c-success">user1@ip-10-1-96-99:~$</span></pre>
       </div>
@@ -982,30 +982,10 @@ root</span></pre>
   Built by <span>Dilan Dodangodage</span> · Aspiring Penetration Tester &amp; Security Researcher
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   // Copy code button
   function copyCode(btn) {
     const pre = btn.closest('.code-block').querySelector('pre');
     const text = pre.innerText;
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'copied!';
-      setTimeout(() => btn.textContent = 'copy', 2000);
-    });
-  }
-
-  // TOC active highlight on scroll
-  const headings = document.querySelectorAll('.section-block h2, .section-block h3');
-  const tocLinks = document.querySelectorAll('.toc-list a');
-
-  window.addEventListener('scroll', () => {
-    let current = '';
-    headings.forEach(h => {
-      if (window.scrollY >= h.offsetTop - 140) current = h.id;
-    });
-    tocLinks.forEach(a => {
-      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
-    });
-  });
-</script>
-</body>
-</html>
+ 
