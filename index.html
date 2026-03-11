@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dilan Dodangodage — Security Researcher</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0d12;
+    --surface: #111520;
+    --surface2: #161c2b;
+    --border: #1e2740;
+    --accent: #4f8ef7;
+    --accent2: #38d9a9;
+    --accent3: #f7c948;
+    --text: #e8eaf0;
+    --muted: #6b7594;
+    --danger: #f76f6f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.5;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: rgba(10,13,18,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  #home {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0 4rem;
+    z-index: 1;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -200px; left: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(79,142,247,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    bottom: -100px; right: 0;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(56,217,169,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-content { max-width: 780px; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.25);
+    border-radius: 100px;
+    padding: 0.35rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--accent2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero-name {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero-name .first { color: var(--text); }
+  .hero-name .last {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+  }
+
+  .hero-role {
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    color: var(--accent2);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .btn-primary:hover {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: var(--text);
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s 0.5s ease both;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .stat-num span { color: var(--accent); }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  /* ── SECTION SHARED ── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 4rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    max-width: 500px;
+    margin-bottom: 3.5rem;
+  }
+
+  /* ── WRITEUPS ── */
+  #writeups { background: var(--surface); }
+
+  .writeups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .writeup-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .writeup-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .writeup-card:hover { border-color: rgba(79,142,247,0.3); transform: translateY(-4px); }
+  .writeup-card:hover::before { transform: scaleX(1); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-platform {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .card-difficulty {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .diff-easy { background: rgba(56,217,169,0.1); color: var(--accent2); border: 1px solid rgba(56,217,169,0.2); }
+  .diff-medium { background: rgba(247,201,72,0.1); color: var(--accent3); border: 1px solid rgba(247,201,72,0.2); }
+  .diff-hard { background: rgba(247,111,111,0.1); color: var(--danger); border: 1px solid rgba(247,111,111,0.2); }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .card-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: auto;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    background: var(--surface2);
+    color: var(--muted);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  .card-arrow {
+    align-self: flex-end;
+    font-size: 1rem;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .writeup-card:hover .card-arrow { opacity: 1; transform: translateX(4px); }
+
+  /* ── ABOUT ── */
+  #about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+  }
+
+  .about-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .terminal-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.2rem;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .t-red { background: #f76f6f; }
+  .t-yellow { background: var(--accent3); }
+  .t-green { background: var(--accent2); }
+
+  .terminal-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-left: auto;
+    letter-spacing: 0.05em;
+  }
+
+  .terminal-body {
+    padding: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 2;
+  }
+
+  .t-prompt { color: var(--accent2); }
+  .t-cmd { color: var(--text); }
+  .t-output { color: var(--muted); }
+  .t-key { color: var(--accent); }
+  .t-val { color: var(--accent2); }
+  .t-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .about-text .section-sub { margin-bottom: 2rem; }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .skill-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .skill-icon { color: var(--accent2); font-size: 0.7rem; }
+
+  .cert-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .cert-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.2);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── CONTACT ── */
+  #contact { background: var(--surface); }
+
+  .contact-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+
+  .contact-link:hover { border-color: var(--accent); transform: translateX(6px); }
+
+  .contact-link-icon {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .contact-link-info { flex: 1; }
+
+  .contact-link-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .contact-link-value {
+    font-size: 0.92rem;
+    color: var(--text);
+    margin-top: 0.1rem;
+  }
+
+  .contact-link-arrow { color: var(--muted); font-size: 0.9rem; transition: color 0.2s; }
+  .contact-link:hover .contact-link-arrow { color: var(--accent); }
+
+  /* contact form */
+  .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .form-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .form-input, .form-textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { height: 130px; }
+
+  .form-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+  }
+
+  .form-submit:hover { background: #3a7ce0; transform: translateY(-2px); }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2.5rem 4rem;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  footer span { color: var(--accent2); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1.5rem; }
+    section { padding: 4rem 1.5rem; }
+    #home { padding: 0 1.5rem; }
+    #about { grid-template-columns: 1fr; gap: 3rem; }
+    .contact-inner { grid-template-columns: 1fr; gap: 3rem; }
+    .hero-stats { gap: 2rem; }
+  }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .hero-name { font-size: 2.8rem; }
+    .writeups-grid { grid-template-columns: 1fr; }
+    .skills-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#home" class="nav-logo">DD<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#writeups">Writeups</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Available for opportunities
+    </div>
+    <h1 class="hero-name">
+      <div class="first">Dilan</div>
+      <div class="last">Dodangodage</div>
+    </h1>
+    <p class="hero-role">// Aspiring Penetration Tester &amp; Security Researcher</p>
+    <p class="hero-desc">
+      Documenting my journey through CTF machines, vulnerability research,
+      and offensive security — one writeup at a time.
+    </p>
+    <div class="hero-btns">
+      <a href="#writeups" class="btn-primary">View Writeups →</a>
+      <a href="#contact" class="btn-secondary">Get in Touch</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">1<span>+</span></div>
+        <div class="stat-label">Machines Pwned</div>
+      </div>
+      <div>
+        <div class="stat-num">CTF<span>.</span></div>
+        <div class="stat-label">Player</div>
+      </div>
+      <div>
+        <div class="stat-num">0x<span>1</span></div>
+        <div class="stat-label">Flags Captured</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WRITEUPS -->
+<section id="writeups">
+  <div class="reveal">
+    <p class="section-label">// 01 — writeups</p>
+    <h2 class="section-title">CTF Writeups</h2>
+    <p class="section-sub">Detailed walkthroughs of machines I've compromised, covering enumeration, exploitation, and privilege escalation.</p>
+  </div>
+
+  <div class="writeups-grid">
+
+    <!-- Ascension Card -->
+    <a href="ascension_writeup.md" class="writeup-card reveal">
+      <div class="card-meta">
+        <span class="card-platform">Hack Smarter</span>
+        <span class="card-difficulty diff-medium">Medium</span>
+      </div>
+      <div class="card-title">Ascension</div>
+      <div class="card-desc">
+        Anonymous FTP → NFS share leak → SSH key cracking → Cron job abuse → MySQL enumeration → Python cap_setuid privilege escalation.
+      </div>
+      <div class="card-tags">
+        <span class="tag">FTP</span>
+        <span class="tag">NFS</span>
+        <span class="tag">SSH</span>
+        <span class="tag">WordPress</span>
+        <span class="tag">Cron Abuse</span>
+        <span class="tag">MySQL</span>
+        <span class="tag">Linux PrivEsc</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <!-- Placeholder Card -->
+    <div class="writeup-card reveal" style="opacity:0.4; cursor:default;">
+      <div class="card-meta">
+        <span class="card-platform">Coming Soon</span>
+        <span class="card-difficulty diff-easy">Easy</span>
+      </div>
+      <div class="card-title">Next Machine</div>
+      <div class="card-desc">
+        More writeups on the way. Check back soon.
+      </div>
+      <div class="card-tags">
+        <span class="tag">???</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-visual reveal">
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <div class="t-dot t-red"></div>
+        <div class="t-dot t-yellow"></div>
+        <div class="t-dot t-green"></div>
+        <span class="terminal-title">whoami.sh</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">dd@kali</span> <span class="t-cmd">~</span> $ whoami</div>
+        <div class="t-output">dilan_dodangodage</div>
+        <br/>
+        <div><span class="t-prompt">dd@kali</span> <span class="t-cmd">~</span> $ cat profile.json</div>
+        <div>{</div>
+        <div>&nbsp;&nbsp;<span class="t-key">"role"</span>: <span class="t-val">"Aspiring Pentester"</span>,</div>
+        <div>&nbsp;&nbsp;<span class="t-key">"focus"</span>: <span class="t-val">"Offensive Security"</span>,</div>
+        <div>&nbsp;&nbsp;<span class="t-key">"ctf"</span>: <span class="t-val">"Active Player"</span>,</div>
+        <div>&nbsp;&nbsp;<span class="t-key">"tools"</span>: [<span class="t-val">"nmap"</span>, <span class="t-val">"burp"</span>,</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-val">"metasploit"</span>, <span class="t-val">"john"</span>],</div>
+        <div>&nbsp;&nbsp;<span class="t-key">"status"</span>: <span class="t-val">"learning"</span></div>
+        <div>}</div>
+        <br/>
+        <div><span class="t-prompt">dd@kali</span> <span class="t-cmd">~</span> $ <span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-text reveal">
+    <p class="section-label">// 02 — about</p>
+    <h2 class="section-title">About Me</h2>
+    <p class="section-sub">
+      I'm Dilan — an aspiring penetration tester and security researcher passionate about understanding how systems break.
+      I learn by doing: solving CTF machines, studying real-world vulnerabilities, and documenting everything along the way.
+    </p>
+    <p class="section-sub" style="margin-top:-1rem;">
+      This site is my public notebook — every writeup here represents a machine compromised, a technique learned,
+      and a step forward in my security journey.
+    </p>
+
+    <div class="skills-grid">
+      <div class="skill-item"><span class="skill-icon">▸</span> Network Enumeration</div>
+      <div class="skill-item"><span class="skill-icon">▸</span> Web Application Testing</div>
+      <div class="skill-item"><span class="skill-icon">▸</span> Privilege Escalation</div>
+      <div class="skill-item"><span class="skill-icon">▸</span> Password Cracking</div>
+      <div class="skill-item"><span class="skill-icon">▸</span> Linux Post-Exploitation</div>
+      <div class="skill-item"><span class="skill-icon">▸</span> CTF Methodology</div>
+    </div>
+
+    <div class="cert-row">
+      <span class="cert-badge">🎯 CTF Player</span>
+      <span class="cert-badge">🐧 Linux</span>
+      <span class="cert-badge">🔐 Offensive Security</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="reveal">
+      <p class="section-label">// 03 — contact</p>
+      <h2 class="section-title">Get in Touch</h2>
+      <p class="section-sub">
+        Interested in collaborating, have feedback on a writeup, or just want to connect? Reach out.
+      </p>
+
+      <div class="contact-links">
+        <a href="https://github.com/" target="_blank" class="contact-link">
+          <div class="contact-link-icon">⌥</div>
+          <div class="contact-link-info">
+            <div class="contact-link-label">GitHub</div>
+            <div class="contact-link-value">github.com/yourhandle</div>
+          </div>
+          <span class="contact-link-arrow">→</span>
+        </a>
+        <a href="https://linkedin.com/" target="_blank" class="contact-link">
+          <div class="contact-link-icon">in</div>
+          <div class="contact-link-info">
+            <div class="contact-link-label">LinkedIn</div>
+            <div class="contact-link-value">linkedin.com/in/yourprofile</div>
+          </div>
+          <span class="contact-link-arrow">→</span>
+        </a>
+        <a href="mailto:your@email.com" class="contact-link">
+          <div class="contact-link-icon">@</div>
+          <div class="contact-link-info">
+            <div class="contact-link-label">Email</div>
+            <div class="contact-link-value">your@email.com</div>
+          </div>
+          <span class="contact-link-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <p class="section-label" style="margin-bottom:1.5rem;">// Send a Message</p>
+      <div class="contact-form">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-textarea" placeholder="Hey Dilan, ..."></textarea>
+        </div>
+        <button class="form-submit">Send Message →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Built by <span>Dilan Dodangodage</span> · Aspiring Penetration Tester &amp; Security Researcher
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => observer.observe(r));
+
+  // Smooth nav highlight
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.getAttribute('id');
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current ? 'var(--accent)' : '';
+    });
+  });
+</script>
+</body>
+</html>
