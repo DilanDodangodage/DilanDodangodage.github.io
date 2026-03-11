@@ -1,9 +1,9 @@
 # Ascension — CTF Writeup
 
 **Platform:** Hack Smarter  
-**Difficulty:** TBD  
+**Difficulty:** Easy 
 **Date:** October 2025  
-**Author:** [Your Name]
+**Author:** [Dilan Dodangodage]
 
 ---
 
@@ -32,7 +32,7 @@
 
 Ascension is a Linux-based CTF machine exposing several misconfigured services. The attack chain involves:
 
-- Anonymous FTP access leaking a password list
+- Anonymous FTP access is leaking a password list
 - An exposed NFS share leaking an SSH private key
 - Cracking the key's passphrase to gain initial access as `user1`
 - Abusing a writable cron job to pivot to `user2`
@@ -50,13 +50,13 @@ Ascension is a Linux-based CTF machine exposing several misconfigured services. 
 nmap -sV -sC -p- ascension.hsm
 ```
 
-| Port | State | Service | Version |
-|------|-------|---------|---------|
-| 21/tcp | open | ftp | vsftpd 3.0.5 |
-| 22/tcp | open | ssh | OpenSSH 9.6p1 Ubuntu |
-| 80/tcp | open | http | Apache 2.4.58 (Ubuntu) |
-| 111/tcp | open | rpcbind | 2-4 (RPC #100000) |
-| 2049/tcp | open | nfs_acl | 3 (RPC #100227) |
+| Port     | State | Service | Version               |
+|----------|-------|---------|-----------------------|
+| 21/tcp   | open  | ftp     | vsftpd 3.0.5          |
+| 22/tcp   | open  | ssh     | OpenSSH 9.6p1 Ubuntu  |
+| 80/tcp   | open  | http    | Apache 2.4.58 (Ubuntu)|
+| 111/tcp  | open  | rpcbind | 2-4 (RPC #100000)     |
+| 2049/tcp | open  | nfs_acl | 3 (RPC #100227)       |
 
 ---
 
@@ -69,7 +69,7 @@ ftp anonymous@ascension.hsm
 # Password: (blank)
 ```
 
-A file named `pwlist.txt` was discovered and downloaded — containing a list of potentially compromised passwords, useful for later brute-force attacks.
+A file named `pwlist.txt` was discovered and downloaded, containing a list of potentially compromised passwords, useful for later brute-force attacks.
 
 ```
 ftp> get pwlist.txt
@@ -89,7 +89,7 @@ root@ascension.hsm: Permission denied (publickey).
 
 ### HTTP (Port 80)
 
-The server returned an Apache2 default page but directory enumeration with **dirsearch** revealed a WordPress installation:
+The server returned an Apache2 default page, but directory enumeration with **dirsearch** revealed a WordPress installation:
 
 ```
 /wp-admin/       → 500
@@ -181,7 +181,7 @@ Using the `pwlist.txt` downloaded earlier, **Hydra** was used to brute-force FTP
 hydra -l ftpuser -P pwlist.txt ftp://ascension.hsm
 ```
 
-**Credentials found:** `ftpuser : secret`
+**Credentials found:** `ftpuser: secret`
 
 Switched to `ftpuser` from the existing SSH session:
 
@@ -211,9 +211,9 @@ use wordpress;
 select * from flags;
 ```
 
-| id | flag |
-|----|------|
-| 1 | `RkxBRzR7d2ViamhuYXNkMzg5MjM0a25kam9pM2R9` |
+| id | flag                                       |
+|----|--------------------------------------------|
+| 1  | `RkxBRzR7d2ViamhuYXNkMzg5MjM0a25kam9pM2R9` |
 
 > **Decoded (Base64):** `FLAG4{webjhnassd389234kndjoi3d}`
 
@@ -227,9 +227,9 @@ The `users` table in the `wordpress` database contained credentials for `user3`:
 select * from users;
 ```
 
-| id | username | password |
-|----|----------|----------|
-| 1 | user3 | user3password |
+| id | username | password     |
+|----|----------|--------------|
+| 1  | user3    | user3password|
 
 ```bash
 su user3
@@ -269,25 +269,29 @@ root
 
 ## Flags
 
-| Flag | Location | Value |
-|------|----------|-------|
-| FLAG4 | MySQL `wordpress.flags` table | `FLAG4{webjhnassd389234kndjoi3d}` |
-| *(others)* | *(add remaining flags here)* | — |
+| Flag | Value                              |
+|------|------------------------------------|
+| FLAG1| `FLAG1{hjsyu892334hjohnsd8y293h4}` |
+| FLAG2| `FLAG2{sdhh98234njohn3kjdj233fd}`  |
+| FLAG3| `FLAG3{gjdohnasd98234kjnbckdf}`    |
+| FLAG4| `FLAG4{webjhnassd389234kndjoi3d}`  |
+| FLAG5| `FLAG5{johnabcdsjhfs8234kjnboz}`   |
+| FLAG6| `FLAG6{sdfjudhfs8234kjnbohndjf}`   |
 
 ---
 
 ## Lessons Learned
 
-| Finding | Risk | Recommendation |
-|---------|------|----------------|
-| Anonymous FTP with sensitive files | High | Disable anonymous FTP or restrict accessible files |
-| NFS share world-accessible | High | Restrict NFS exports with IP allowlisting |
-| SSH private key without strong passphrase | High | Use strong, unique passphrases on all keys |
-| World-writable cron job script in `/tmp` | Critical | Restrict cron script permissions; avoid `/tmp` |
-| Plaintext credentials in `wp-config.php` | High | Use environment variables or secrets management |
-| Weak database credentials | Medium | Enforce strong password policy for DB users |
-| Python binary with `cap_setuid` capability | Critical | Audit and remove unnecessary Linux capabilities |
+| Finding                                    | Risk     | Recommendation                                     |
+|--------------------------------------------|----------|----------------------------------------------------|
+| Anonymous FTP with sensitive files         | High     | Disable anonymous FTP or restrict accessible files |
+| NFS share world-accessible                 | High     | Restrict NFS exports with IP allowlisting          |
+| SSH private key without strong passphrase  | High     | Use strong, unique passphrases on all keys         |
+| World-writable cron job script in `/tmp`   | Critical | Restrict cron script permissions; avoid `/tmp`     |
+| Plaintext credentials in `wp-config.php`   | High     | Use environment variables or secrets management    |
+| Weak database credentials                  | Medium   | Enforce strong password policy for DB users        |
+| Python binary with `cap_setuid` capability | Critical | Audit and remove unnecessary Linux capabilities    |
 
 ---
 
-*Writeup by [Your Name] — [Your GitHub Profile Link]*
+*Writeup by [Dilan Dodangodage] — [https://github.com/DilanDodangodage]*
